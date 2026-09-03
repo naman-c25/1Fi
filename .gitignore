@@ -22,9 +22,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files — never commit real credentials
+# env files — never commit real credentials.
+# Deliberately broad: .env.backup, .env.ohio.bak and friends must not slip in.
 .env
-.env*.local
+.env.*
 !.env.example
 
 # vercel

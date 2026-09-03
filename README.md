@@ -26,8 +26,9 @@ Built for the 1Fi SDE1 assignment.
 4. [Schema](#schema)
 5. [API endpoints and example responses](#api-endpoints-and-example-responses)
 6. [How the EMI is calculated](#how-the-emi-is-calculated)
-7. [Project layout](#project-layout)
-8. [Design notes](#design-notes)
+7. [Performance](#performance)
+8. [Project layout](#project-layout)
+9. [Design notes](#design-notes)
 
 ---
 
@@ -147,8 +148,12 @@ The app is a single Next.js deployable — one service, no separate API server.
 
 1. Push the repo to GitHub and import it at [vercel.com/new](https://vercel.com/new).
 2. Add both environment variables (Settings → Environment Variables):
-   - `DATABASE_URL` — pooled connection string
-   - `DIRECT_URL` — direct connection string
+   - `DATABASE_URL` — connection string
+   - `DIRECT_URL` — same host, used for migrations
+
+   Pick the Neon region closest to where the functions run (Vercel defaults to
+   `iad1`, US East), and see the note on pooled vs direct endpoints under
+   [Performance](#performance).
 3. Deploy. The build command (`prisma generate && next build`) is already set in `vercel.json`.
 4. Seed the production database once, from your machine, with production credentials in `.env`:
    ```bash
@@ -509,6 +514,77 @@ interest         = 149076 − 127400      = ₹21,676
 total payable    = 149076 + 499 (fee)   = ₹1,49,575
 effective cost   = 149575 − 7500 (cashback) = ₹1,42,075
 ```
+
+
+---
+
+## Performance
+
+The page you see is served from cache and renders in ~20 ms; a cold cache costs
+one database round trip. Getting there took four changes, each measured on this
+machine (Windows, India):
+
+**1. Put the database near whatever queries it.** The first Neon project was in
+`us-east-2` (Ohio). TCP connect from India measured **~1000 ms**, against 38 ms
+to Mumbai and ~85 ms to Singapore. Neon has no Mumbai region, so the database
+lives in `ap-southeast-1`. This one change was worth more than everything else
+combined.
+
+**2. Use the direct endpoint, not the pooler.** Neon hands out two hostnames;
+the `-pooler` one runs pgbouncer. Six consecutive `SELECT 1` calls:
+
+| Endpoint | Samples |
+|---|---|
+| `...-pooler...` | 85, **10011**, 79, 484, 1022, 82 ms |
+| direct | 85, 80, 80, 91, 97, 87 ms |
+
+The direct endpoint runs at exactly the network round trip. Prisma maintains its
+own connection pool, so pgbouncer adds nothing for a long-lived Node server —
+it earns its keep only when many short-lived serverless instances each open
+connections. Both URLs therefore point at the direct host.
+
+**3. One statement per page, not nine.** Prisma resolves an `include` tree with
+a separate query per relation by default, so every extra relation costs another
+round trip. `relationJoins` (enabled in `schema.prisma`) collapses the tree into
+LATERAL joins:
+
+| Query | Separate | Joined |
+|---|---|---|
+| Product page | 1063 ms | **529 ms** |
+| Catalogue | 1430 ms (max 2694) | **1351 ms** (max 1478) |
+
+**4. Cache the catalogue.** A product catalogue is read far more often than it
+changes, so rendered pages reuse the API response for `CATALOGUE_TTL_SECONDS`
+(60 s, in `src/lib/api-client.ts`) instead of hitting Postgres per visit:
+
+| Page | Cold | Warm |
+|---|---|---|
+| `/` | 694 ms | **18–24 ms** |
+| `/products` | 22 ms | **17–21 ms** |
+| `/products/iphone-17-pro` | 932 ms | **21–25 ms** |
+
+`/api/*` is deliberately left uncached, so JSON you `curl` is always live and
+`POST /api/emi-applications` always writes. The trade-off is that a row edited
+directly in the database can take up to 60 s to appear on a page — lower the
+constant to 0 while demoing live edits.
+
+### Want it faster still?
+
+Every remaining millisecond is the ~85 ms hop to Singapore plus Neon's free-tier
+0.25 vCU compute. Point `.env` at a PostgreSQL on your own machine and the same
+queries run in about a millisecond:
+
+```env
+DATABASE_URL="postgresql://postgres:<password>@localhost:5432/onefi?schema=public"
+DIRECT_URL="postgresql://postgres:<password>@localhost:5432/onefi?schema=public"
+```
+
+```bash
+npm run db:migrate && npm run db:seed
+```
+
+Keep the Neon URL for the deployed demo, where the database and the server are
+in the same region anyway.
 
 ---
 

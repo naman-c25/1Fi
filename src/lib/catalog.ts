@@ -2,7 +2,7 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { computeEmi, pledgedUnitsPaise, tenureLabel } from "./emi";
+import { computeEmi, monthlyInstalmentPaise, pledgedUnitsPaise, tenureLabel } from "./emi";
 import {
   BPS_PER_PERCENT,
   discountPercent,
@@ -54,6 +54,32 @@ const productInclude = {
 type ProductWithRelations = Prisma.ProductGetPayload<{ include: typeof productInclude }>;
 type PlanWithFund = ProductWithRelations["emiPlans"][number];
 type VariantWithImages = ProductWithRelations["variants"][number];
+
+/**
+ * The catalogue tile needs far less than the product page: no spec bullets, no
+ * fund details, and only the one image it actually shows. Fetching the full
+ * tree for every product just to throw most of it away is the difference
+ * between ~250 rows and ~50 on the listing.
+ */
+const summaryInclude = {
+  variants: {
+    orderBy: [{ position: "asc" }, { slug: "asc" }],
+    include: { images: { orderBy: { position: "asc" }, take: 1 } },
+  },
+  emiPlans: {
+    where: { isActive: true },
+    orderBy: [{ position: "asc" }, { tenureMonths: "asc" }],
+  },
+} satisfies Prisma.ProductInclude;
+
+type ProductSummaryRow = Prisma.ProductGetPayload<{ include: typeof summaryInclude }>;
+
+/**
+ * Fetch every relation in one statement (LATERAL joins) instead of one round
+ * trip per relation. Irrelevant against a local database; decisive when the
+ * database is a few hundred milliseconds away.
+ */
+const JOIN = { relationLoadStrategy: "join" } as const;
 
 // ---------------------------------------------------------------------------
 // DTO mappers
@@ -173,34 +199,47 @@ function toProductDTO(product: ProductWithRelations): ProductDTO {
   };
 }
 
-function toProductSummaryDTO(product: ProductWithRelations): ProductSummaryDTO {
-  const full = toProductDTO(product);
-  const cheapest = full.variants.reduce((best, variant) =>
-    variant.price.paise < best.price.paise ? variant : best,
-  );
-  const hero = full.variants.find((v) => v.isDefault) ?? cheapest;
+function toProductSummaryDTO(product: ProductSummaryRow): ProductSummaryDTO {
+  const variants = product.variants;
+  const cheapest = variants.reduce((best, v) => (v.pricePaise < best.pricePaise ? v : best));
+  const hero = variants.find((v) => v.isDefault) ?? cheapest;
+  const heroImage = hero.images[0];
 
-  const lowestMonthly = full.variants.reduce(
-    (min, variant) => Math.min(min, variant.lowestMonthlyAmount.paise),
-    Number.POSITIVE_INFINITY,
-  );
+  // "EMI from ₹X" — the smallest instalment across every variant and tenure.
+  // Only the instalment is needed here, not the full breakdown.
+  let lowestMonthly = Number.POSITIVE_INFINITY;
+  for (const variant of variants) {
+    for (const plan of product.emiPlans) {
+      const monthly = monthlyInstalmentPaise(
+        variant.pricePaise,
+        plan.tenureMonths,
+        plan.interestRateBps,
+      );
+      if (monthly < lowestMonthly) lowestMonthly = monthly;
+    }
+  }
 
   return {
-    id: full.id,
-    slug: full.slug,
-    name: full.name,
-    brand: full.brand,
-    category: full.category,
-    tagline: full.tagline,
-    isNew: full.isNew,
-    url: full.url,
-    image: hero.images[0] ?? null,
-    colors: full.colors,
-    storageOptions: full.storageOptions,
-    variantCount: full.variantCount,
-    startingPrice: cheapest.price,
-    startingMrp: cheapest.mrp,
-    discountPercent: cheapest.discountPercent,
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    brand: product.brand,
+    category: product.category,
+    tagline: product.tagline,
+    isNew: product.isNew,
+    url: `/products/${product.slug}`,
+    image: heroImage
+      ? { url: heroImage.url, alt: heroImage.alt ?? `${hero.colorName} ${hero.storage}` }
+      : null,
+    colors: uniqueBy(
+      variants.map((v) => ({ name: v.colorName, hex: v.colorHex })),
+      (c) => c.name,
+    ),
+    storageOptions: [...new Set(variants.map((v) => v.storage))],
+    variantCount: variants.length,
+    startingPrice: money(cheapest.pricePaise),
+    startingMrp: money(cheapest.mrpPaise),
+    discountPercent: discountPercent(cheapest.mrpPaise, cheapest.pricePaise),
     lowestMonthlyAmount: money(Number.isFinite(lowestMonthly) ? lowestMonthly : 0),
     longestTenureMonths: product.emiPlans.reduce(
       (max, plan) => Math.max(max, plan.tenureMonths),
@@ -216,8 +255,11 @@ function toProductSummaryDTO(product: ProductWithRelations): ProductSummaryDTO {
 
 export async function listProducts(options: { brand?: string; search?: string } = {}) {
   const products = await prisma.product.findMany({
+    ...JOIN,
     where: {
       isActive: true,
+      // A product with no variants has no price and nothing to buy.
+      variants: { some: {} },
       ...(options.brand ? { brand: { equals: options.brand, mode: "insensitive" } } : {}),
       ...(options.search
         ? {
@@ -230,7 +272,7 @@ export async function listProducts(options: { brand?: string; search?: string } 
         : {}),
     },
     orderBy: [{ position: "asc" }, { name: "asc" }],
-    include: productInclude,
+    include: summaryInclude,
   });
 
   return products.map(toProductSummaryDTO);
@@ -239,6 +281,7 @@ export async function listProducts(options: { brand?: string; search?: string } 
 /** Accepts either the cuid primary key or the URL slug. */
 export async function getProduct(idOrSlug: string): Promise<ProductDTO | null> {
   const product = await prisma.product.findFirst({
+    ...JOIN,
     where: { isActive: true, OR: [{ slug: idOrSlug }, { id: idOrSlug }] },
     include: productInclude,
   });
@@ -312,6 +355,7 @@ export async function createEmiApplication(input: {
   emiPlanId: string;
 }): Promise<EmiApplicationDTO> {
   const variant = await prisma.variant.findFirst({
+    ...JOIN,
     where: { OR: [{ id: input.variantId }, { sku: input.variantId }] },
     include: { product: true },
   });
@@ -324,6 +368,7 @@ export async function createEmiApplication(input: {
   }
 
   const plan = await prisma.emiPlan.findFirst({
+    ...JOIN,
     where: { id: input.emiPlanId, isActive: true },
     include: { fund: true },
   });
@@ -397,6 +442,7 @@ export async function createEmiApplication(input: {
 /** Reads back a submitted application from its printed reference. */
 export async function getEmiApplication(reference: string): Promise<EmiApplicationDTO | null> {
   const application = await prisma.emiApplication.findUnique({
+    ...JOIN,
     where: { reference },
     include: {
       emiPlan: true,

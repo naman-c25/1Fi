@@ -10,6 +10,10 @@
 
 generator client {
   provider = "prisma-client-js"
+  // relationJoins lets Prisma fetch an `include` tree with LATERAL joins in a
+  // single statement instead of one round trip per relation. With the database
+  // on another continent that is the difference between 9 round trips and 1.
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {

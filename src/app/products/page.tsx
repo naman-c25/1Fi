@@ -4,7 +4,9 @@ import { ProductGrid } from "@/components/ProductCard";
 import { apiGet } from "@/lib/api-client";
 import type { ProductSummaryDTO } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+// Rendered per request (getBaseUrl reads headers), but the catalogue fetch
+// underneath is served from the Data Cache — see CATALOGUE_TTL_SECONDS.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "All products",
