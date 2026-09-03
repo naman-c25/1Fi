@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 620" width="460" height="620"
+     role="img" aria-label="Galaxy S25 Ultra in Titanium Whitesilver, rear view">
+  <defs>
+    <linearGradient id="body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2e5e8" />
+      <stop offset="38%" stop-color="#DADEE2" />
+      <stop offset="100%" stop-color="#a6a9ac" />
+    </linearGradient>
+    <linearGradient id="gloss" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30" />
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glass-a" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#4a5568" />
+      <stop offset="45%" stop-color="#1a1d23" />
+      <stop offset="100%" stop-color="#05070a" />
+    </radialGradient>
+    <radialGradient id="glass-b" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#4a5568" />
+      <stop offset="45%" stop-color="#1a1d23" />
+      <stop offset="100%" stop-color="#05070a" />
+    </radialGradient>
+    <radialGradient id="glass-c" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#4a5568" />
+      <stop offset="45%" stop-color="#1a1d23" />
+      <stop offset="100%" stop-color="#05070a" />
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="230" cy="570" rx="143.84" ry="26" fill="url(#shadow)" />
+
+  <rect x="114" y="62" width="232" height="482" rx="40"
+        fill="url(#body)" stroke="#7e8183" stroke-width="2" />
+  <rect x="117" y="65" width="226" height="476"
+        rx="37" fill="none" stroke="#e2e5e8" stroke-width="1" opacity="0.55" />
+  <rect x="114" y="62" width="116" height="482" rx="40"
+        fill="url(#gloss)" />
+
+  
+    
+    <circle cx="164" cy="108" r="21" fill="#2b2d31" />
+    <circle cx="164" cy="108" r="18.5" fill="url(#glass-a)" />
+    <circle cx="164" cy="108" r="8.82" fill="#0b0d10" />
+    <circle cx="157.7" cy="101.28" r="3.36" fill="#ffffff" opacity="0.45" />
+    
+    <circle cx="164" cy="158" r="18" fill="#2b2d31" />
+    <circle cx="164" cy="158" r="15.5" fill="url(#glass-b)" />
+    <circle cx="164" cy="158" r="7.56" fill="#0b0d10" />
+    <circle cx="158.6" cy="152.24" r="2.88" fill="#ffffff" opacity="0.45" />
+    
+    <circle cx="164" cy="202" r="16" fill="#2b2d31" />
+    <circle cx="164" cy="202" r="13.5" fill="url(#glass-c)" />
+    <circle cx="164" cy="202" r="6.72" fill="#0b0d10" />
+    <circle cx="159.2" cy="196.88" r="2.56" fill="#ffffff" opacity="0.45" />
+    <rect x="198" y="100" width="12" height="26" rx="6" fill="#f3efdf" opacity="0.8" />
+
+  <!-- side buttons -->
+  <rect x="111" y="212" width="3" height="54" rx="1.5" fill="#7e8183" />
+  <rect x="111" y="278" width="3" height="54" rx="1.5" fill="#7e8183" />
+  <rect x="346" y="240" width="3" height="76" rx="1.5" fill="#7e8183" />
+</svg>

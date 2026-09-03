@@ -1,0 +1,201 @@
+// =============================================================================
+// 1Fi — Mutual-fund backed EMI storefront
+// Prisma schema (PostgreSQL)
+//
+// Money convention: every monetary column is stored as an INTEGER number of
+// paise (1 INR = 100 paise). Rates are stored as INTEGER basis points
+// (1% = 100 bps). Keeping money and rates as integers avoids floating point
+// drift entirely — formatting to "₹1,27,400" / "10.5%" happens at the edge.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  // Migrations bypass the connection pooler; runtime queries go through it.
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+/// A sellable model line, e.g. "iPhone 17 Pro". Addressable at /products/:slug.
+model Product {
+  id          String  @id @default(cuid())
+  /// URL segment — the public identifier, e.g. "iphone-17-pro".
+  slug        String  @unique
+  name        String
+  brand       String
+  category    String  @default("Smartphones")
+  /// Short marketing line shown under the title.
+  tagline     String?
+  description String?
+  /// Renders the "NEW" ribbon on the product card.
+  isNew       Boolean @default(false)
+  /// Ordering hint for the catalogue grid (lower = earlier).
+  position    Int     @default(0)
+  isActive    Boolean @default(true)
+
+  highlights ProductHighlight[]
+  variants   Variant[]
+  emiPlans   EmiPlan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+  @@map("products")
+}
+
+/// Bullet points ("6.3-inch Super Retina XDR", "A19 Pro chip", ...).
+model ProductHighlight {
+  id        String @id @default(cuid())
+  productId String
+  label     String
+  value     String
+  position  Int    @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, position])
+  @@map("product_highlights")
+}
+
+/// A concrete purchasable configuration: colour + storage, with its own pricing.
+/// This is the row EMI amounts are actually computed against.
+model Variant {
+  id        String @id @default(cuid())
+  productId String
+  /// Unique within a product, e.g. "silver-256gb".
+  slug      String
+  sku       String @unique
+
+  colorName String
+  /// Hex swatch rendered in the colour picker, e.g. "#E3E4E5".
+  colorHex  String
+  storage   String
+
+  /// Maximum retail price, in paise. Shown struck through.
+  mrpPaise   Int
+  /// Actual selling price, in paise. Drives every EMI calculation.
+  pricePaise Int
+
+  inStock   Boolean @default(true)
+  isDefault Boolean @default(false)
+  position  Int     @default(0)
+
+  images       VariantImage[]
+  applications EmiApplication[]
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, slug])
+  @@index([productId, position])
+  @@map("variants")
+}
+
+/// Images belong to a variant, so switching colour switches the gallery.
+model VariantImage {
+  id        String  @id @default(cuid())
+  variantId String
+  url       String
+  alt       String?
+  position  Int     @default(0)
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId, position])
+  @@map("variant_images")
+}
+
+// ---------------------------------------------------------------------------
+// EMI financing
+// ---------------------------------------------------------------------------
+
+/// The mutual fund a plan is collateralised against. 1Fi lends against the
+/// customer's holdings rather than issuing a conventional loan, so every plan
+/// points at the fund backing it.
+model MutualFund {
+  id                String  @id @default(cuid())
+  code              String  @unique
+  name              String
+  amc               String
+  category          String
+  /// Indicative annualised return, in basis points (e.g. 730 = 7.30%).
+  expectedReturnBps Int
+  riskLevel         String  @default("Low")
+
+  emiPlans EmiPlan[]
+
+  @@map("mutual_funds")
+}
+
+/// A financing option offered on a product. Stores only the *terms* —
+/// the monthly instalment is derived from the selected variant's price at
+/// request time so pricing can never go stale in the database.
+model EmiPlan {
+  id        String @id @default(cuid())
+  productId String
+  fundId    String
+
+  /// Number of monthly instalments (3, 6, 12, 24, 36, 48, 60...).
+  tenureMonths Int
+  /// Annual interest rate in basis points. 0 = "0% interest", 1050 = 10.5%.
+  interestRateBps Int @default(0)
+  /// Flat cashback credited back to the customer, in paise. 0 = no cashback.
+  cashbackPaise      Int @default(0)
+  /// One-time processing fee, in paise.
+  processingFeePaise Int @default(0)
+
+  /// Highlighted as "Most popular" in the UI.
+  isRecommended Boolean @default(false)
+  isActive      Boolean @default(true)
+  position      Int     @default(0)
+
+  fund         MutualFund       @relation(fields: [fundId], references: [id])
+  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  applications EmiApplication[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, tenureMonths])
+  @@index([productId, position])
+  @@map("emi_plans")
+}
+
+/// Created when a customer taps "Proceed" on a selected plan. Snapshots the
+/// derived amounts so a later price change never rewrites history.
+model EmiApplication {
+  id        String @id @default(cuid())
+  /// Human-facing reference shown on the confirmation screen, e.g. "1FI-8KQ2M4".
+  reference String @unique
+
+  variantId String
+  emiPlanId String
+
+  /// Amounts frozen at the moment of application, in paise.
+  principalPaise      Int
+  monthlyAmountPaise  Int
+  totalPayablePaise   Int
+  cashbackPaise       Int
+  tenureMonths        Int
+  interestRateBps     Int
+
+  status String @default("PENDING")
+
+  variant Variant @relation(fields: [variantId], references: [id])
+  emiPlan EmiPlan @relation(fields: [emiPlanId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("emi_applications")
+}

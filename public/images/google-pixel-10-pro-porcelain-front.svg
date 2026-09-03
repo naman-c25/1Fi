@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 620" width="460" height="620"
+     role="img" aria-label="Pixel 10 Pro in Porcelain, front view">
+  <defs>
+    <linearGradient id="frame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eee9e0" />
+      <stop offset="50%" stop-color="#a5a19a" />
+      <stop offset="100%" stop-color="#76736e" />
+    </linearGradient>
+    <linearGradient id="wallpaper" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#d3cbbd" />
+      <stop offset="55%" stop-color="#C9BFAE" />
+      <stop offset="100%" stop-color="#6f6960" />
+    </linearGradient>
+    <radialGradient id="bloom" cx="30%" cy="22%" r="70%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.42" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="screen-clip">
+      <rect x="123" y="71" width="214" height="464" rx="31" />
+    </clipPath>
+  </defs>
+
+  <ellipse cx="230" cy="570" rx="143.84" ry="26" fill="url(#shadow)" />
+
+  <rect x="114" y="62" width="232" height="482" rx="40"
+        fill="url(#frame)" stroke="#6a6763" stroke-width="2" />
+
+  <g clip-path="url(#screen-clip)">
+    <rect x="123" y="71" width="214" height="464" fill="url(#wallpaper)" />
+    <circle cx="182.92000000000002" cy="163.8" r="117.7" fill="url(#bloom)" />
+    <circle cx="304.9" cy="405.08" r="89.88" fill="#ffffff" opacity="0.10" />
+    <circle cx="144.4" cy="479.32" r="77.03999999999999" fill="#000000" opacity="0.12" />
+
+    <!-- abstract lock-screen furniture -->
+    <rect x="170.07999999999998" y="131.32" width="119.84000000000002" height="26" rx="13"
+          fill="#ffffff" opacity="0.28" />
+    <rect x="195.76" y="168.44" width="68.48" height="12" rx="6"
+          fill="#ffffff" opacity="0.20" />
+    <rect x="148.68" y="414.36" width="162.64000000000001" height="54" rx="18"
+          fill="#ffffff" opacity="0.16" />
+    <rect x="187.2" y="502.52000000000004" width="85.60000000000001" height="6" rx="3"
+          fill="#ffffff" opacity="0.5" />
+  </g>
+
+  <!-- dynamic island / punch hole -->
+  <rect x="192" y="85" width="76" height="24" rx="12" fill="#080a0d" />
+  <circle cx="252" cy="97" r="6" fill="#161a20" />
+
+  <rect x="117" y="65" width="226" height="476"
+        rx="37" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.22" />
+</svg>

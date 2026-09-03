@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 620" width="460" height="620"
+     role="img" aria-label="Pixel 10 Pro in Obsidian, rear view">
+  <defs>
+    <linearGradient id="body" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#525356" />
+      <stop offset="38%" stop-color="#212326" />
+      <stop offset="100%" stop-color="#191b1d" />
+    </linearGradient>
+    <linearGradient id="gloss" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30" />
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glass-a" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#4a5568" />
+      <stop offset="45%" stop-color="#1a1d23" />
+      <stop offset="100%" stop-color="#05070a" />
+    </radialGradient>
+    <radialGradient id="glass-b" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#4a5568" />
+      <stop offset="45%" stop-color="#1a1d23" />
+      <stop offset="100%" stop-color="#05070a" />
+    </radialGradient>
+    <radialGradient id="glass-c" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#4a5568" />
+      <stop offset="45%" stop-color="#1a1d23" />
+      <stop offset="100%" stop-color="#05070a" />
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="230" cy="570" rx="143.84" ry="26" fill="url(#shadow)" />
+
+  <rect x="114" y="62" width="232" height="482" rx="40"
+        fill="url(#body)" stroke="#131416" stroke-width="2" />
+  <rect x="117" y="65" width="226" height="476"
+        rx="37" fill="none" stroke="#525356" stroke-width="1" opacity="0.55" />
+  <rect x="114" y="62" width="116" height="482" rx="40"
+        fill="url(#gloss)" />
+
+  
+    <rect x="112" y="146" width="236" height="60" rx="30"
+          fill="#2e3033" stroke="#1a1b1e" stroke-width="1.5" />
+    
+    <circle cx="176" cy="176" r="21" fill="#2b2d31" />
+    <circle cx="176" cy="176" r="18.5" fill="url(#glass-a)" />
+    <circle cx="176" cy="176" r="8.82" fill="#0b0d10" />
+    <circle cx="169.7" cy="169.28" r="3.36" fill="#ffffff" opacity="0.45" />
+    
+    <circle cx="230" cy="176" r="21" fill="#2b2d31" />
+    <circle cx="230" cy="176" r="18.5" fill="url(#glass-b)" />
+    <circle cx="230" cy="176" r="8.82" fill="#0b0d10" />
+    <circle cx="223.7" cy="169.28" r="3.36" fill="#ffffff" opacity="0.45" />
+    <rect x="264" y="166" width="34" height="20" rx="10" fill="#1d1f22" opacity="0.85" />
+
+  <!-- side buttons -->
+  <rect x="111" y="212" width="3" height="54" rx="1.5" fill="#131416" />
+  <rect x="111" y="278" width="3" height="54" rx="1.5" fill="#131416" />
+  <rect x="346" y="240" width="3" height="76" rx="1.5" fill="#131416" />
+</svg>
