@@ -30,8 +30,14 @@ function Logo() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN">
-      <body className="min-h-dvh antialiased">
+    // Browser extensions and translation tools routinely rewrite attributes on
+    // <html> and <body> (normalising lang="en-IN" to "en", adding their own
+    // data-* markers) before React hydrates, which React reports as a mismatch.
+    // suppressHydrationWarning applies to these two elements' own attributes
+    // only — never their children — so real mismatches inside the app still
+    // surface.
+    <html lang="en-IN" suppressHydrationWarning>
+      <body className="min-h-dvh antialiased" suppressHydrationWarning>
         <header className="sticky top-0 z-40 border-b border-hairline bg-white/85 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
             <Link href="/" aria-label="1Fi EMI Store home">
