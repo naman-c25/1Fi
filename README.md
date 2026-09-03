@@ -494,6 +494,11 @@ Vercel runs serverless functions, not a long-lived process, so the Express app i
 | [`server/src/app.js`](server/src/app.js) | builds the app, no `listen()` |
 | [`server/api/index.js`](server/api/index.js) | `export default app` — the function Vercel invokes |
 | [`server/vercel.json`](server/vercel.json) | rewrites every path to that one function; Express routes internally |
+
+> `vercel.json` is schema-validated with `additionalProperties: false`. An unknown key —
+> even a harmless `"comment"` — fails the build, so the previous deployment stays live and
+> the fix appears not to have worked. Validate it against
+> `https://openapi.vercel.sh/vercel.json` if a deploy silently does nothing.
 | [`server/src/index.js`](server/src/index.js) | local dev only — this is the file that calls `listen()` |
 
 **Set one environment variable**, or every request returns a 503 saying so:
