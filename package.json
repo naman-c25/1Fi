@@ -1,41 +1,23 @@
 {
   "name": "onefi-emi-store",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Full-stack product + mutual-fund-backed EMI plan storefront (1Fi SDE1 assignment)",
+  "description": "MERN storefront for mutual-fund backed EMI plans (1Fi SDE1 assignment)",
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed",
-    "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio",
-    "images:generate": "tsx scripts/generate-images.ts",
-    "db:export": "tsx scripts/export-sql.ts"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
-  "dependencies": {
-    "@prisma/client": "6.19.3",
-    "next": "15.5.25",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "server-only": "^0.0.1"
+    "dev": "concurrently -n api,web -c magenta,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "build": "npm run build --workspace client",
+    "start": "npm run start --workspace server",
+    "seed": "npm run seed --workspace server",
+    "images:generate": "node scripts/generate-images.mjs"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.3.3",
-    "@types/node": "24.10.1",
-    "@types/react": "19.2.7",
-    "@types/react-dom": "19.2.3",
-    "prisma": "6.19.3",
-    "tailwindcss": "4.3.3",
-    "tsx": "4.23.13",
-    "typescript": "5.9.3"
+    "concurrently": "10.0.5"
   },
   "engines": {
     "node": ">=20.9.0"

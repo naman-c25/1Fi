@@ -1,38 +1,21 @@
 # dependencies
-/node_modules
-/.pnp
-.pnp.js
+node_modules
 
-# next.js
-/.next/
-/out/
-next-env.d.ts
+# build output
+client/dist
+build
 
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-Thumbs.db
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files — never commit real credentials.
-# Deliberately broad: .env.backup, .env.ohio.bak and friends must not slip in.
+# env files — never commit real credentials
 .env
 .env.*
 !.env.example
 
-# vercel
+# logs
+npm-debug.log*
+*.log
+
+# misc
+.DS_Store
+Thumbs.db
+.vscode
 .vercel
-
-# typescript
-*.tsbuildinfo
-
-# prisma
-/prisma/generated

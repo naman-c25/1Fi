@@ -1,0 +1,4 @@
+# Netlify / Cloudflare Pages: this is a single-page app, so every unknown path
+# must fall through to index.html or a hard refresh on /products/iphone-17-pro
+# would 404.
+/*  /index.html  200
