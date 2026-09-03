@@ -501,7 +501,14 @@ Vercel runs serverless functions, not a long-lived process, so the Express app i
 > `https://openapi.vercel.sh/vercel.json` if a deploy silently does nothing.
 | [`server/src/index.js`](server/src/index.js) | local dev only — this is the file that calls `listen()` |
 
-**Set one environment variable**, or every request returns a 503 saying so:
+**Allow the platform to reach Atlas first.** Atlas blocks every IP by default, and a
+serverless function has no fixed egress address to add — so under
+**Atlas > Network Access > Add IP Address** choose **Allow access from anywhere**
+(`0.0.0.0/0`). Without it the API deploys fine and every request returns
+`DATABASE_UNAVAILABLE`. The database user's credentials are then the only thing
+protecting the cluster, so give it a strong password and only the permissions it needs.
+
+**Then set one environment variable**, or every request returns a 503 saying so:
 
 | Variable | Value |
 |---|---|

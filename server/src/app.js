@@ -12,6 +12,38 @@ import { MutualFund } from "./models/MutualFund.js";
 import { Product } from "./models/Product.js";
 
 /**
+ * Turns a connection failure into something actionable.
+ *
+ * Mongo's own "IP that isn't whitelisted" message tells you to add *your*
+ * address — advice that cannot be followed on a serverless platform, where
+ * every invocation can egress from a different IP and there is no stable
+ * address to add.
+ */
+function databaseHint(error) {
+  const message = String(error?.message ?? "");
+  const name = String(error?.name ?? "");
+
+  // Match the error class, not its wording: Atlas spells this out ("...isn't
+  // whitelisted") but a plain timeout says only "Server selection timed out",
+  // and both are the same problem when the host cannot reach the cluster.
+  if (name === "MongooseServerSelectionError" || /whitelist|IP address/i.test(message)) {
+    return (
+      " — This host's IP is not allowed by MongoDB Atlas. Serverless platforms" +
+      " (Vercel, Lambda) have no fixed egress IP, so add 0.0.0.0/0 under Atlas" +
+      " > Network Access > Add IP Address > Allow access from anywhere. The" +
+      " database user's credentials are then what protects the cluster, so give" +
+      " it a strong password and only the permissions it needs."
+    );
+  }
+
+  if (/authentication failed|bad auth/i.test(message)) {
+    return " — Check the username and password in MONGODB_URI (special characters must be percent-encoded).";
+  }
+
+  return "";
+}
+
+/**
  * Builds the Express app.
  *
  * Deliberately does NOT listen on a port. `src/index.js` does that for local
@@ -65,7 +97,7 @@ export function createApp() {
       return fail(
         res,
         "DATABASE_UNAVAILABLE",
-        `Could not reach MongoDB: ${error.message}`,
+        `Could not reach MongoDB: ${error.message}${databaseHint(error)}`,
         503,
       );
     }
