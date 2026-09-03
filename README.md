@@ -95,6 +95,18 @@ Create a free cluster, add a database user, allow your IP under Network Access, 
 ```env
 MONGODB_URI="mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/onefi?retryWrites=true&w=majority"
 ```
+
+**Mind the `/onefi` before the `?`.** The string Atlas shows in its Connect dialog ends
+`...mongodb.net/?appName=Cluster0` with no database name, and MongoDB then quietly uses one
+called `test` — so the API connects successfully and serves an empty catalogue, which looks
+like a broken app rather than a misconfigured URI. `connectToDatabase` falls back to `onefi`
+and logs a warning when the name is missing, but naming it is clearer.
+
+Then seed the cluster from your machine with that same `MONGODB_URI`:
+
+```bash
+npm run seed
+```
 </details>
 
 ### 3. Seed
