@@ -482,33 +482,67 @@ effective cost   = 149575 − 7500 (cashback) = ₹1,42,075
 
 ## Deploying
 
-Two services, because the API and the React app are separate.
+Two Vercel projects from the one repo — they differ only in **Root Directory**.
 
-### API (Render, Railway, Fly — anything that runs Node)
+### 1. API — Root Directory `server`
 
-- Root directory: `server`
-- Build: `npm install`
-- Start: `npm start`
-- Environment:
-  - `MONGODB_URI` — an **Atlas** connection string (a local mongod is not reachable from a host)
-  - `CORS_ORIGIN` — the deployed client's URL, e.g. `https://onefi-emi.vercel.app`
+Vercel runs serverless functions, not a long-lived process, so the Express app is
+*exported* rather than told to listen:
 
-Seed the Atlas database once, from your machine, with `MONGODB_URI` pointed at it:
+| File | Role |
+|---|---|
+| [`server/src/app.js`](server/src/app.js) | builds the app, no `listen()` |
+| [`server/api/index.js`](server/api/index.js) | `export default app` — the function Vercel invokes |
+| [`server/vercel.json`](server/vercel.json) | rewrites every path to that one function; Express routes internally |
+| [`server/src/index.js`](server/src/index.js) | local dev only — this is the file that calls `listen()` |
+
+**Set one environment variable**, or every request returns a 503 saying so:
+
+| Variable | Value |
+|---|---|
+| `MONGODB_URI` | your Atlas string, **including the database name**: `mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/onefi?retryWrites=true&w=majority` |
+| `CORS_ORIGIN` | optional; defaults to `*`. Only needed if the client calls the API cross-origin. |
+
+Then seed the cluster once, from your machine, with that same `MONGODB_URI` in `server/.env`:
 
 ```bash
 npm run seed
 ```
 
-### Client (Vercel, Netlify, Cloudflare Pages)
+Check it:
 
-- Root directory: `client`
-- Build: `npm run build` → output `dist`
-- Environment: `VITE_API_URL` = the deployed API's URL
+```bash
+curl https://<your-api>.vercel.app/api/health
+```
 
-It is a single-page app, so the host must rewrite unknown paths to `index.html` or
-`/products/iphone-17-pro` would 404 on a hard refresh. Both configs are already in the repo:
-[`client/vercel.json`](client/vercel.json) for Vercel, and
-[`client/public/_redirects`](client/public/_redirects) for Netlify / Cloudflare Pages.
+### 2. Client — Root Directory `client`
+
+No environment variables needed. [`client/vercel.json`](client/vercel.json) does two things:
+
+```jsonc
+{
+  "rewrites": [
+    // 1. /api/* is proxied to the API, so the browser only ever calls its own
+    //    origin — no cross-origin request, so CORS cannot break the demo.
+    { "source": "/api/:path*", "destination": "https://server-lac-seven-91.vercel.app/api/:path*" },
+    // 2. everything else falls through to the SPA, so a hard refresh on
+    //    /products/iphone-17-pro does not 404.
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+**Point that first rewrite at your own API URL** if you redeploy the backend somewhere else.
+This mirrors the Vite dev proxy exactly, so development and production behave identically.
+
+Prefer a cross-origin setup instead? Set `VITE_API_URL` on the client to the API's URL and
+`CORS_ORIGIN` on the server to the client's URL — then the rewrite is unused.
+
+### Other hosts
+
+The API is an ordinary Express app, so Render / Railway / Fly work with no changes:
+build `npm install`, start `npm start`, root directory `server`. That path uses
+`src/index.js` and its `listen()`.
 
 ---
 
@@ -516,8 +550,11 @@ It is a single-page app, so the host must rewrite unknown paths to `index.html` 
 
 ```
 ├── server/                     Express + Mongoose API
+│   ├── api/index.js            Vercel serverless entry (exports the app)
+│   ├── vercel.json             routes every path to that function
 │   ├── src/
-│   │   ├── index.js            app bootstrap, CORS, error handling
+│   │   ├── app.js              builds the Express app (no listen)
+│   │   ├── index.js            local entry — listens on PORT
 │   │   ├── db.js               Mongoose connection
 │   │   ├── models/             Product, MutualFund, EmiApplication
 │   │   ├── routes/             products.js, emiApplications.js

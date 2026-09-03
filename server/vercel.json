@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "comment": "One Express app handles every path; it does its own routing.",
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+// Same-origin unless VITE_API_URL overrides it — see src/api.js.
+const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 /**
  * Confirmation shown after `POST /api/emi-applications` succeeds. Every value

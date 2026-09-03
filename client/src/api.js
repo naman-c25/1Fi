@@ -1,9 +1,13 @@
 /**
  * The only place the client talks to the backend.
  *
- * In development `VITE_API_URL` is empty and Vite proxies `/api` to the Express
- * server on port 4000, so the browser only ever calls its own origin. In
- * production it holds the deployed API's URL.
+ * By default every call is same-origin: Vite proxies `/api` to Express on port
+ * 4000 in development, and `client/vercel.json` rewrites `/api/*` to the
+ * deployed API in production. The browser therefore never makes a
+ * cross-origin request, so there is no CORS to get wrong.
+ *
+ * Set `VITE_API_URL` to call an API on another origin instead — the backend
+ * allows it, but then `CORS_ORIGIN` on the server has to name this client.
  */
 
 const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
